@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分帳計算器</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --card: rgba(255, 252, 247, 0.92);
+      --card-strong: #fffdf8;
+      --text: #1f1a17;
+      --muted: #75695f;
+      --line: rgba(88, 67, 51, 0.14);
+      --accent: #c76b33;
+      --accent-deep: #8f4318;
+      --good: #2e6b4f;
+      --shadow: 0 24px 60px rgba(72, 43, 25, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(230, 161, 114, 0.30), transparent 28%),
+        radial-gradient(circle at top right, rgba(197, 121, 74, 0.22), transparent 24%),
+        linear-gradient(160deg, #fbf4ea 0%, #f3ebde 45%, #efe5d4 100%);
+      padding: 28px 16px 40px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      margin-bottom: 22px;
+      padding: 28px;
+      border: 1px solid rgba(120, 82, 46, 0.12);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255, 249, 241, 0.96), rgba(248, 235, 220, 0.9)),
+        var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3.4rem);
+      letter-spacing: 0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-inner {
+      padding: 24px;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-wide {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(114, 83, 58, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.84);
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus {
+      border-color: rgba(199, 107, 51, 0.7);
+      box-shadow: 0 0 0 4px rgba(199, 107, 51, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      color: #fffaf5;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      box-shadow: 0 14px 28px rgba(143, 67, 24, 0.22);
+    }
+
+    .secondary {
+      color: var(--accent-deep);
+      background: rgba(255, 247, 239, 0.96);
+      border: 1px solid rgba(199, 107, 51, 0.18);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      padding: 16px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 253, 249, 0.96), rgba(246, 237, 227, 0.96));
+      border: 1px solid rgba(121, 89, 63, 0.12);
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.3rem;
+    }
+
+    .summary-card span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .result-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .person-card {
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: var(--card-strong);
+      border: 1px solid rgba(110, 80, 59, 0.1);
+      display: grid;
+      gap: 10px;
+    }
+
+    .person-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .person-header h3 {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .person-header strong {
+      font-size: 1.2rem;
+      color: var(--good);
+    }
+
+    .person-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .empty-state {
+      padding: 24px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 251, 245, 0.95), rgba(248, 240, 230, 0.95));
+      border: 1px dashed rgba(132, 100, 73, 0.22);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .footnote {
+      margin-top: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero,
+      .panel-inner {
+        padding: 20px;
+      }
+
+      .grid,
+      .summary,
+      .person-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>分帳計算器</h1>
+      <p>輸入 4 個人的商品金額、總稅額和實際刷卡台幣金額，系統會先把刷卡金額乘上 1.015 的國外信用卡手續費，再回推出匯率，並依照商品金額比例分攤稅額，算出每個人最後要付多少台幣。</p>
+    </section>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="section-title">輸入金額</h2>
+          <form id="bill-form" novalidate>
+            <div class="grid">
+              <div class="field">
+                <label for="taiquan">泰權 商品金額（CAD）</label>
+                <input id="taiquan" name="taiquan" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 120.50" required>
+              </div>
+
+              <div class="field">
+                <label for="siru">思儒 商品金額（CAD）</label>
+                <input id="siru" name="siru" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 80" required>
+              </div>
+
+              <div class="field">
+                <label for="mingjun">茗鈞 商品金額（CAD）</label>
+                <input id="mingjun" name="mingjun" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 45.30" required>
+              </div>
+
+              <div class="field">
+                <label for="yuezhe">岳哲 商品金額（CAD）</label>
+                <input id="yuezhe" name="yuezhe" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 220" required>
+              </div>
+
+              <div class="field">
+                <label for="tax">總稅額（CAD）</label>
+                <input id="tax" name="tax" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 37.99" required>
+              </div>
+
+              <div class="field">
+                <label for="charged-twd">原始刷卡金額（TWD）</label>
+                <input id="charged-twd" name="charged-twd" type="number" min="0" step="1" inputmode="decimal" placeholder="例如 10325" required>
+              </div>
+
+              <div class="field field-wide">
+                <span class="hint">規則：先以「原始刷卡金額 × 1.015」算出含手續費刷卡總額，再依商品金額比例分攤稅額，最後依含手續費刷卡總額分配每個人應付的台幣。</span>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">開始計算</button>
+              <button class="secondary" type="button" id="fill-demo">填入範例</button>
+              <button class="secondary" type="reset">清空</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="section-title">計算結果</h2>
+
+          <div class="summary" id="summary">
+            <div class="summary-card">
+              <span>商品總金額（CAD）</span>
+              <strong id="subtotal-cad">0.00</strong>
+            </div>
+            <div class="summary-card">
+              <span>總金額（CAD）</span>
+              <strong id="total-cad">0.00</strong>
+            </div>
+            <div class="summary-card">
+              <span>含手續費刷卡金額（TWD）</span>
+              <strong id="total-twd-with-fee">0</strong>
+            </div>
+            <div class="summary-card">
+              <span>匯率（TWD / CAD）</span>
+              <strong id="exchange-rate">0.000000</strong>
+            </div>
+          </div>
+
+          <div class="result-list" id="result-list">
+            <div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>
+          </div>
+
+          <div class="footnote" id="message"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const PEOPLE = [
+      { key: "taiquan", name: "泰權" },
+      { key: "siru", name: "思儒" },
+      { key: "mingjun", name: "茗鈞" },
+      { key: "yuezhe", name: "岳哲" }
+    ];
+
+    const FEE_MULTIPLIER = 1.015;
+
+    const form = document.getElementById("bill-form");
+    const resultList = document.getElementById("result-list");
+    const message = document.getElementById("message");
+    const fillDemoButton = document.getElementById("fill-demo");
+
+    const summaryEls = {
+      subtotalCad: document.getElementById("subtotal-cad"),
+      totalCad: document.getElementById("total-cad"),
+      totalTwdWithFee: document.getElementById("total-twd-with-fee"),
+      exchangeRate: document.getElementById("exchange-rate")
+    };
+
+    function roundTo(value, decimals) {
+      const factor = 10 ** decimals;
+      return Math.round((value + Number.EPSILON) * factor) / factor;
+    }
+
+    function floorTo(value, decimals) {
+      const factor = 10 ** decimals;
+      return Math.floor((value + Number.EPSILON) * factor) / factor;
+    }
+
+    function formatNumber(value, decimals) {
+      return new Intl.NumberFormat("zh-TW", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(value);
+    }
+
+    function splitProportionally(total, weights, decimals) {
+      const roundedTotal = roundTo(total, decimals);
+      const step = 1 / (10 ** decimals);
+      const count = weights.length;
+
+      if (!count) {
+        return [];
+      }
+
+      if (roundedTotal === 0) {
+        return Array(count).fill(0);
+      }
+
+      const weightSum = weights.reduce((sum, value) => sum + value, 0);
+      const rawShares = weightSum === 0
+        ? Array(count).fill(roundedTotal / count)
+        : weights.map((weight) => roundedTotal * weight / weightSum);
+
+      const baseShares = rawShares.map((share) => floorTo(share, decimals));
+      const used = baseShares.reduce((sum, value) => sum + value, 0);
+      const remainderSteps = Math.round((roundedTotal - used) / step);
+
+      const order = rawShares
+        .map((share, index) => ({
+          index,
+          fraction: share - baseShares[index],
+          weight: weights[index]
+        }))
+        .sort((a, b) => {
+          if (b.fraction !== a.fraction) return b.fraction - a.fraction;
+          if (b.weight !== a.weight) return b.weight - a.weight;
+          return a.index - b.index;
+        });
+
+      for (let i = 0; i < remainderSteps; i += 1) {
+        baseShares[order[i].index] = roundTo(baseShares[order[i].index] + step, decimals);
+      }
+
+      return baseShares.map((share) => roundTo(share, decimals));
+    }
+
+    function getValues() {
+      const values = {};
+
+      for (const person of PEOPLE) {
+        const field = form.elements[person.key];
+        const value = Number(field.value);
+        if (Number.isNaN(value) || value < 0) {
+          throw new Error(`請輸入 ${person.name} 的有效商品金額。`);
+        }
+        values[person.key] = roundTo(value, 2);
+      }
+
+      const tax = Number(form.elements["tax"].value);
+      const chargedTwd = Number(form.elements["charged-twd"].value);
+
+      if (Number.isNaN(tax) || tax < 0) {
+        throw new Error("請輸入有效的總稅額。");
+      }
+
+      if (Number.isNaN(chargedTwd) || chargedTwd < 0) {
+        throw new Error("請輸入有效的原始刷卡金額。");
+      }
+
+      values.tax = roundTo(tax, 2);
+      values.chargedTwd = roundTo(chargedTwd, 0);
+      return values;
+    }
+
+    function renderResults(data) {
+      summaryEls.subtotalCad.textContent = formatNumber(data.subtotalCad, 2);
+      summaryEls.totalCad.textContent = formatNumber(data.totalCad, 2);
+      summaryEls.totalTwdWithFee.textContent = formatNumber(data.chargedTwdWithFee, 0);
+      summaryEls.exchangeRate.textContent = formatNumber(data.exchangeRate, 6);
+
+      resultList.innerHTML = data.people.map((person) => `
+        <article class="person-card">
+          <div class="person-header">
+            <h3>${person.name}</h3>
+            <strong>${formatNumber(person.twdDue, 0)} TWD</strong>
+          </div>
+          <div class="person-meta">
+            <div>商品：${formatNumber(person.itemCad, 2)} CAD</div>
+            <div>稅額：${formatNumber(person.taxCad, 2)} CAD</div>
+            <div>合計：${formatNumber(person.totalCad, 2)} CAD</div>
+          </div>
+        </article>
+      `).join("");
+
+      message.textContent = `原始刷卡金額 ${formatNumber(data.originalChargedTwd, 0)} TWD，乘上 1.015 後為 ${formatNumber(data.chargedTwdWithFee, 0)} TWD。每個人的應付台幣加總會等於含手續費刷卡總額。`;
+    }
+
+    function resetResults() {
+      summaryEls.subtotalCad.textContent = "0.00";
+      summaryEls.totalCad.textContent = "0.00";
+      summaryEls.totalTwdWithFee.textContent = "0";
+      summaryEls.exchangeRate.textContent = "0.000000";
+      resultList.innerHTML = '<div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>';
+      message.textContent = "";
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      try {
+        const values = getValues();
+        const itemAmounts = PEOPLE.map((person) => values[person.key]);
+        const subtotalCad = roundTo(itemAmounts.reduce((sum, value) => sum + value, 0), 2);
+        const totalCad = roundTo(subtotalCad + values.tax, 2);
+
+        if (totalCad === 0) {
+          throw new Error("總金額（CAD）為 0，無法回推出匯率。");
+        }
+
+        const chargedTwdWithFee = roundTo(values.chargedTwd * FEE_MULTIPLIER, 0);
+        const exchangeRate = chargedTwdWithFee / totalCad;
+        const taxShares = splitProportionally(values.tax, itemAmounts, 2);
+        const totalSharesCad = itemAmounts.map((item, index) => roundTo(item + taxShares[index], 2));
+        const totalSharesTwd = splitProportionally(chargedTwdWithFee, totalSharesCad, 0);
+
+        renderResults({
+          subtotalCad,
+          totalCad,
+          originalChargedTwd: values.chargedTwd,
+          chargedTwdWithFee,
+          exchangeRate,
+          people: PEOPLE.map((person, index) => ({
+            name: person.name,
+            itemCad: itemAmounts[index],
+            taxCad: taxShares[index],
+            totalCad: totalSharesCad[index],
+            twdDue: totalSharesTwd[index]
+          }))
+        });
+      } catch (error) {
+        resetResults();
+        message.textContent = error.message;
+      }
+    });
+
+    form.addEventListener("reset", () => {
+      window.setTimeout(resetResults, 0);
+    });
+
+    fillDemoButton.addEventListener("click", () => {
+      form.elements["taiquan"].value = "100";
+      form.elements["siru"].value = "200";
+      form.elements["mingjun"].value = "300";
+      form.elements["yuezhe"].value = "400";
+      form.elements["tax"].value = "130";
+      form.elements["charged-twd"].value = "24830";
+    });
+
+    resetResults();
+  </script>
+</body>
+</html>
