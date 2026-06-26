@@ -15,6 +15,7 @@
       --accent: #c76b33;
       --accent-deep: #8f4318;
       --good: #2e6b4f;
+      --warn: #8a3e1d;
       --shadow: 0 24px 60px rgba(72, 43, 25, 0.14);
     }
 
@@ -35,7 +36,7 @@
     }
 
     .page {
-      max-width: 1100px;
+      max-width: 1140px;
       margin: 0 auto;
     }
 
@@ -58,15 +59,15 @@
 
     .hero p {
       margin: 0;
-      max-width: 760px;
+      max-width: 800px;
       color: var(--muted);
-      line-height: 1.7;
+      line-height: 1.75;
       font-size: 1rem;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.98fr);
       gap: 22px;
       align-items: start;
     }
@@ -117,7 +118,8 @@
       line-height: 1.7;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       border: 1px solid rgba(114, 83, 58, 0.18);
       border-radius: 16px;
@@ -129,7 +131,8 @@
       transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       border-color: rgba(199, 107, 51, 0.7);
       box-shadow: 0 0 0 4px rgba(199, 107, 51, 0.12);
       transform: translateY(-1px);
@@ -185,7 +188,7 @@
     .summary-card strong {
       display: block;
       margin-top: 6px;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
     }
 
     .summary-card span {
@@ -193,12 +196,20 @@
       font-size: 0.88rem;
     }
 
-    .result-list {
+    .subsection-title {
+      margin: 22px 0 12px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .result-list,
+    .settlement-list {
       display: grid;
       gap: 12px;
     }
 
-    .person-card {
+    .person-card,
+    .settlement-card {
       padding: 16px 18px;
       border-radius: 20px;
       background: var(--card-strong);
@@ -207,14 +218,16 @@
       gap: 10px;
     }
 
-    .person-header {
+    .person-header,
+    .settlement-header {
       display: flex;
       justify-content: space-between;
       gap: 12px;
       align-items: baseline;
     }
 
-    .person-header h3 {
+    .person-header h3,
+    .settlement-header h3 {
       margin: 0;
       font-size: 1.08rem;
     }
@@ -224,11 +237,22 @@
       color: var(--good);
     }
 
+    .settlement-header strong {
+      font-size: 1.12rem;
+      color: var(--warn);
+    }
+
     .person-meta {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .settlement-note {
+      color: var(--muted);
+      line-height: 1.65;
       font-size: 0.92rem;
     }
 
@@ -272,7 +296,7 @@
   <div class="page">
     <section class="hero">
       <h1>分帳計算器</h1>
-      <p>輸入 4 個人的商品金額、總稅額和實際刷卡台幣金額，系統會先把刷卡金額乘上 1.015 的國外信用卡手續費，再回推出匯率，並依照商品金額比例分攤稅額，算出每個人最後要付多少台幣。</p>
+      <p>輸入 4 個人的商品金額、總稅額和實際刷卡台幣金額，系統會先把刷卡金額乘上 1.015 的國外信用卡手續費，再回推出匯率，並依照商品金額比例分攤稅額。你也可以指定這筆台幣是誰先支付，系統會直接算出最後每個人還要還給誰多少錢。</p>
     </section>
 
     <main class="layout">
@@ -283,36 +307,46 @@
             <div class="grid">
               <div class="field">
                 <label for="taiquan">泰權 商品金額（CAD）</label>
-                <input id="taiquan" name="taiquan" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 120.50" required>
+                <input id="taiquan" name="taiquan" type="text" inputmode="decimal" placeholder="例如 120.5+39.9+15" required>
               </div>
 
               <div class="field">
                 <label for="siru">思儒 商品金額（CAD）</label>
-                <input id="siru" name="siru" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 80" required>
+                <input id="siru" name="siru" type="text" inputmode="decimal" placeholder="例如 80+12.4" required>
               </div>
 
               <div class="field">
                 <label for="mingjun">茗鈞 商品金額（CAD）</label>
-                <input id="mingjun" name="mingjun" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 45.30" required>
+                <input id="mingjun" name="mingjun" type="text" inputmode="decimal" placeholder="例如 45.3+89" required>
               </div>
 
               <div class="field">
                 <label for="yuezhe">岳哲 商品金額（CAD）</label>
-                <input id="yuezhe" name="yuezhe" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 220" required>
+                <input id="yuezhe" name="yuezhe" type="text" inputmode="decimal" placeholder="例如 220+16" required>
               </div>
 
               <div class="field">
                 <label for="tax">總稅額（CAD）</label>
-                <input id="tax" name="tax" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如 37.99" required>
+                <input id="tax" name="tax" type="text" inputmode="decimal" placeholder="例如 37.99" required>
               </div>
 
               <div class="field">
                 <label for="charged-twd">原始刷卡金額（TWD）</label>
-                <input id="charged-twd" name="charged-twd" type="number" min="0" step="1" inputmode="decimal" placeholder="例如 10325" required>
+                <input id="charged-twd" name="charged-twd" type="text" inputmode="decimal" placeholder="例如 10325" required>
               </div>
 
               <div class="field field-wide">
-                <span class="hint">規則：先以「原始刷卡金額 × 1.015」算出含手續費刷卡總額，再依商品金額比例分攤稅額，最後依含手續費刷卡總額分配每個人應付的台幣。</span>
+                <label for="payer">這筆台幣是誰支付的</label>
+                <select id="payer" name="payer">
+                  <option value="泰權">泰權</option>
+                  <option value="思儒">思儒</option>
+                  <option value="茗鈞">茗鈞</option>
+                  <option value="岳哲">岳哲</option>
+                </select>
+              </div>
+
+              <div class="field field-wide">
+                <span class="hint">規則：商品欄位可以直接輸入像 `100+25+39.9`。系統會先以「原始刷卡金額 × 1.015」算出含手續費刷卡總額，再依商品金額比例分攤稅額，最後依含手續費刷卡總額分配每個人應付的台幣，並算出彼此之間的還款關係。</span>
               </div>
             </div>
 
@@ -329,7 +363,7 @@
         <div class="panel-inner">
           <h2 class="section-title">計算結果</h2>
 
-          <div class="summary" id="summary">
+          <div class="summary">
             <div class="summary-card">
               <span>商品總金額（CAD）</span>
               <strong id="subtotal-cad">0.00</strong>
@@ -352,6 +386,11 @@
             <div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>
           </div>
 
+          <h3 class="subsection-title">互相還款</h3>
+          <div class="settlement-list" id="settlement-list">
+            <div class="empty-state">選好付款人後，這裡會顯示每個人最後還要還給誰多少台幣。</div>
+          </div>
+
           <div class="footnote" id="message"></div>
         </div>
       </section>
@@ -370,6 +409,7 @@
 
     const form = document.getElementById("bill-form");
     const resultList = document.getElementById("result-list");
+    const settlementList = document.getElementById("settlement-list");
     const message = document.getElementById("message");
     const fillDemoButton = document.getElementById("fill-demo");
 
@@ -395,6 +435,33 @@
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       }).format(value);
+    }
+
+    function parseMoneyExpression(raw, label) {
+      const normalized = raw.replaceAll(",", "").replace(/\s+/g, "");
+      if (!normalized) {
+        throw new Error(`請輸入 ${label}。`);
+      }
+
+      const parts = normalized.split("+");
+      if (parts.some((part) => part === "")) {
+        throw new Error(`${label} 的格式不正確，請使用像 100+25+39.9 的寫法。`);
+      }
+
+      let total = 0;
+      for (const part of parts) {
+        if (!/^\d+(\.\d+)?$/.test(part)) {
+          throw new Error(`${label} 只能輸入數字和加號。`);
+        }
+
+        const value = Number(part);
+        if (!Number.isFinite(value) || value < 0) {
+          throw new Error(`${label} 不能小於 0。`);
+        }
+        total += value;
+      }
+
+      return total;
     }
 
     function splitProportionally(total, weights, decimals) {
@@ -438,31 +505,62 @@
       return baseShares.map((share) => roundTo(share, decimals));
     }
 
+    function buildSettlements(people, payer, chargedTwdWithFee) {
+      const balances = people.map((person) => ({
+        name: person.name,
+        balance: person.name === payer
+          ? chargedTwdWithFee - person.twdDue
+          : -person.twdDue
+      }));
+
+      const creditors = balances
+        .filter((item) => item.balance > 0)
+        .map((item) => ({ ...item }));
+      const debtors = balances
+        .filter((item) => item.balance < 0)
+        .map((item) => ({ name: item.name, balance: Math.abs(item.balance) }));
+
+      const settlements = [];
+      let creditorIndex = 0;
+      let debtorIndex = 0;
+
+      while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+        const creditor = creditors[creditorIndex];
+        const debtor = debtors[debtorIndex];
+        const amount = Math.min(creditor.balance, debtor.balance);
+
+        settlements.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount: roundTo(amount, 0)
+        });
+
+        creditor.balance = roundTo(creditor.balance - amount, 0);
+        debtor.balance = roundTo(debtor.balance - amount, 0);
+
+        if (creditor.balance === 0) {
+          creditorIndex += 1;
+        }
+
+        if (debtor.balance === 0) {
+          debtorIndex += 1;
+        }
+      }
+
+      return settlements;
+    }
+
     function getValues() {
       const values = {};
 
       for (const person of PEOPLE) {
         const field = form.elements[person.key];
-        const value = Number(field.value);
-        if (Number.isNaN(value) || value < 0) {
-          throw new Error(`請輸入 ${person.name} 的有效商品金額。`);
-        }
-        values[person.key] = roundTo(value, 2);
+        values[person.key] = roundTo(parseMoneyExpression(field.value, `${person.name} 的商品金額`), 2);
       }
 
-      const tax = Number(form.elements["tax"].value);
-      const chargedTwd = Number(form.elements["charged-twd"].value);
-
-      if (Number.isNaN(tax) || tax < 0) {
-        throw new Error("請輸入有效的總稅額。");
-      }
-
-      if (Number.isNaN(chargedTwd) || chargedTwd < 0) {
-        throw new Error("請輸入有效的原始刷卡金額。");
-      }
-
-      values.tax = roundTo(tax, 2);
-      values.chargedTwd = roundTo(chargedTwd, 0);
+      values.tax = roundTo(parseMoneyExpression(form.elements["tax"].value, "總稅額"), 2);
+      values.chargedTwd = roundTo(parseMoneyExpression(form.elements["charged-twd"].value, "原始刷卡金額"), 0);
+      values.payer = form.elements["payer"].value;
       return values;
     }
 
@@ -486,7 +584,29 @@
         </article>
       `).join("");
 
-      message.textContent = `原始刷卡金額 ${formatNumber(data.originalChargedTwd, 0)} TWD，乘上 1.015 後為 ${formatNumber(data.chargedTwdWithFee, 0)} TWD。每個人的應付台幣加總會等於含手續費刷卡總額。`;
+      if (data.settlements.length === 0) {
+        settlementList.innerHTML = `
+          <div class="settlement-card">
+            <div class="settlement-header">
+              <h3>已經結清</h3>
+              <strong>0 TWD</strong>
+            </div>
+            <div class="settlement-note">這筆帳單沒有需要互相轉帳的金額。</div>
+          </div>
+        `;
+      } else {
+        settlementList.innerHTML = data.settlements.map((item) => `
+          <article class="settlement-card">
+            <div class="settlement-header">
+              <h3>${item.from} → ${item.to}</h3>
+              <strong>${formatNumber(item.amount, 0)} TWD</strong>
+            </div>
+            <div class="settlement-note">${item.from} 還需要給 ${item.to} ${formatNumber(item.amount, 0)} TWD。</div>
+          </article>
+        `).join("");
+      }
+
+      message.textContent = `原始刷卡金額 ${formatNumber(data.originalChargedTwd, 0)} TWD，乘上 1.015 後為 ${formatNumber(data.chargedTwdWithFee, 0)} TWD。這筆台幣由 ${data.payer} 先支付，所以最後的還款建議會以 ${data.payer} 為主要收款人。`;
     }
 
     function resetResults() {
@@ -495,6 +615,7 @@
       summaryEls.totalTwdWithFee.textContent = "0";
       summaryEls.exchangeRate.textContent = "0.000000";
       resultList.innerHTML = '<div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>';
+      settlementList.innerHTML = '<div class="empty-state">選好付款人後，這裡會顯示每個人最後還要還給誰多少台幣。</div>';
       message.textContent = "";
     }
 
@@ -517,19 +638,25 @@
         const totalSharesCad = itemAmounts.map((item, index) => roundTo(item + taxShares[index], 2));
         const totalSharesTwd = splitProportionally(chargedTwdWithFee, totalSharesCad, 0);
 
+        const people = PEOPLE.map((person, index) => ({
+          name: person.name,
+          itemCad: itemAmounts[index],
+          taxCad: taxShares[index],
+          totalCad: totalSharesCad[index],
+          twdDue: totalSharesTwd[index]
+        }));
+
+        const settlements = buildSettlements(people, values.payer, chargedTwdWithFee);
+
         renderResults({
           subtotalCad,
           totalCad,
           originalChargedTwd: values.chargedTwd,
           chargedTwdWithFee,
           exchangeRate,
-          people: PEOPLE.map((person, index) => ({
-            name: person.name,
-            itemCad: itemAmounts[index],
-            taxCad: taxShares[index],
-            totalCad: totalSharesCad[index],
-            twdDue: totalSharesTwd[index]
-          }))
+          payer: values.payer,
+          people,
+          settlements
         });
       } catch (error) {
         resetResults();
@@ -538,16 +665,20 @@
     });
 
     form.addEventListener("reset", () => {
-      window.setTimeout(resetResults, 0);
+      window.setTimeout(() => {
+        form.elements["payer"].value = "泰權";
+        resetResults();
+      }, 0);
     });
 
     fillDemoButton.addEventListener("click", () => {
-      form.elements["taiquan"].value = "100";
+      form.elements["taiquan"].value = "100+20";
       form.elements["siru"].value = "200";
-      form.elements["mingjun"].value = "300";
+      form.elements["mingjun"].value = "300+15";
       form.elements["yuezhe"].value = "400";
       form.elements["tax"].value = "130";
       form.elements["charged-twd"].value = "24830";
+      form.elements["payer"].value = "泰權";
     });
 
     resetResults();
