@@ -1,32 +1,82 @@
-# GitHub Pages Calculator Site
+# Cloudflare Workers + D1 旅程分帳
 
-This folder is ready to be used as a separate GitHub Pages repository for:
+這個專案已經從 GitHub Pages 靜態站改成 Cloudflare Workers + D1。
 
-`https://calc.xiao-li-locksmith.com`
+目標功能：
 
-## Files
+- 用旅程代碼跨裝置同步
+- 每筆帳單存在 D1
+- 載入同一個旅程代碼時，可以在不同裝置看到相同結果
 
-- `index.html`: the calculator web page
-- `CNAME`: tells GitHub Pages to use `calc.xiao-li-locksmith.com`
-- `.nojekyll`: disables Jekyll processing so the static file is served as-is
+## 專案結構
 
-## How to publish
+- `public/index.html`: 前端頁面
+- `src/worker.js`: API 與靜態資產入口
+- `migrations/0001_init.sql`: D1 資料表
+- `wrangler.toml`: Workers 與 D1 設定
 
-1. Create a new GitHub repository.
-2. Copy the contents of this folder into that repository root.
-3. Push to GitHub.
-4. In GitHub:
-   - go to `Settings` -> `Pages`
-   - set `Source` to `Deploy from a branch`
-   - choose branch `main`
-   - choose folder `/ (root)`
-5. In Cloudflare DNS, add a `CNAME` record:
-   - `Name`: `calc`
-   - `Target`: `YOUR_GITHUB_USERNAME.github.io`
-6. Wait for GitHub Pages and Cloudflare to finish updating.
+## 第一次設定
 
-## Notes
+1. 安裝依賴
 
-- This setup is for a separate subdomain site.
-- It does not change your main site at `https://xiao-li-locksmith.com/`.
-- If GitHub Pages shows the custom domain field, it should already pick up `calc.xiao-li-locksmith.com` from the `CNAME` file.
+```bash
+npm install
+```
+
+2. 登入 Cloudflare
+
+```bash
+npx wrangler login
+```
+
+3. 建立 D1 database
+
+```bash
+npx wrangler d1 create calc-xiao-li-locksmith
+```
+
+4. 把 Cloudflare 回傳的 `database_id` 填進 [wrangler.toml](/c:/Users/aabbb/Desktop/分帳/github-pages-calc/wrangler.toml) 的 `database_id`
+
+5. 套用 migration
+
+本機：
+
+```bash
+npm run db:migrate:local
+```
+
+正式環境：
+
+```bash
+npm run db:migrate:remote
+```
+
+## 本機開發
+
+```bash
+npm run dev
+```
+
+## 部署
+
+```bash
+npm run deploy
+```
+
+## 網域
+
+部署完成後，把 Worker 綁到 `calc.xiao-li-locksmith.com`。
+
+如果你的 DNS 已經在 Cloudflare，通常是：
+
+1. 到 Workers 的 routes / domains 設定
+2. 把 `calc.xiao-li-locksmith.com/*` 指到這個 Worker
+
+## 安全提醒
+
+目前版本使用「旅程代碼」作為共享識別。
+
+也就是說：
+
+- 知道旅程代碼的人，可以看到那個旅程的資料
+- 如果你之後要更私密，我們可以再加「旅程密碼」或 Cloudflare Access

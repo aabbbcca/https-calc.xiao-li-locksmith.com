@@ -1,0 +1,18 @@
+name = "calc-xiao-li-locksmith"
+main = "src/worker.js"
+compatibility_date = "2026-06-26"
+workers_dev = true
+
+[[routes]]
+pattern = "calc.xiao-li-locksmith.com/*"
+zone_name = "xiao-li-locksmith.com"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "calc-xiao-li-locksmith"
+database_id = "388394cf-f3f9-4dcc-8acb-400625807170"
+migrations_dir = "./migrations"

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅程分帳計算器</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --card: rgba(255, 252, 247, 0.92);
+      --card-strong: #fffdf8;
+      --text: #1f1a17;
+      --muted: #75695f;
+      --line: rgba(88, 67, 51, 0.14);
+      --accent: #c76b33;
+      --accent-deep: #8f4318;
+      --good: #2e6b4f;
+      --warn: #8a3e1d;
+      --shadow: 0 24px 60px rgba(72, 43, 25, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(230, 161, 114, 0.30), transparent 28%),
+        radial-gradient(circle at top right, rgba(197, 121, 74, 0.22), transparent 24%),
+        linear-gradient(160deg, #fbf4ea 0%, #f3ebde 45%, #efe5d4 100%);
+      padding: 28px 16px 40px;
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      margin-bottom: 22px;
+      padding: 28px;
+      border: 1px solid rgba(120, 82, 46, 0.12);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255, 249, 241, 0.96), rgba(248, 235, 220, 0.9)),
+        var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3.4rem);
+      letter-spacing: 0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-inner {
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-wide {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid rgba(114, 83, 58, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.84);
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(199, 107, 51, 0.7);
+      box-shadow: 0 0 0 4px rgba(199, 107, 51, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .primary {
+      color: #fffaf5;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      box-shadow: 0 14px 28px rgba(143, 67, 24, 0.22);
+    }
+
+    .secondary {
+      color: var(--accent-deep);
+      background: rgba(255, 247, 239, 0.96);
+      border: 1px solid rgba(199, 107, 51, 0.18);
+    }
+
+    .danger {
+      color: #fff8f4;
+      background: linear-gradient(135deg, #b85b35, #8a3e1d);
+      box-shadow: 0 12px 24px rgba(138, 62, 29, 0.18);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      padding: 16px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 253, 249, 0.96), rgba(246, 237, 227, 0.96));
+      border: 1px solid rgba(121, 89, 63, 0.12);
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.2rem;
+    }
+
+    .summary-card span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .subsection-title {
+      margin: 22px 0 12px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .result-list,
+    .settlement-list,
+    .saved-bill-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .person-card,
+    .settlement-card,
+    .saved-bill-card,
+    .trip-card {
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: var(--card-strong);
+      border: 1px solid rgba(110, 80, 59, 0.1);
+      display: grid;
+      gap: 10px;
+    }
+
+    .person-header,
+    .settlement-header,
+    .saved-bill-header,
+    .trip-card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .person-header h3,
+    .settlement-header h3,
+    .saved-bill-header h3,
+    .trip-card-header h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .person-header strong {
+      font-size: 1.18rem;
+      color: var(--good);
+    }
+
+    .settlement-header strong {
+      font-size: 1.08rem;
+      color: var(--warn);
+    }
+
+    .saved-bill-header strong,
+    .trip-card-header strong {
+      font-size: 1rem;
+      color: var(--accent-deep);
+    }
+
+    .person-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .settlement-note,
+    .saved-bill-note,
+    .trip-card-note {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.92rem;
+    }
+
+    .saved-bill-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mini-button {
+      padding: 9px 14px;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      padding: 24px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 251, 245, 0.95), rgba(248, 240, 230, 0.95));
+      border: 1px dashed rgba(132, 100, 73, 0.22);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .footnote {
+      margin-top: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.88rem;
+    }
+
+    .status {
+      min-height: 1.4em;
+      margin-top: 10px;
+      color: var(--accent-deep);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero,
+      .panel-inner {
+        padding: 20px;
+      }
+
+      .grid,
+      .summary,
+      .person-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>旅程分帳計算器</h1>
+      <p>先建立一個旅程代碼，之後在任何裝置輸入同一個代碼，就能看到相同的帳單和總結算。每一筆帳單都會存在雲端的 Cloudflare D1 裡，不再只存在單一瀏覽器。</p>
+    </section>
+
+    <main class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-inner">
+            <div class="panel-header">
+              <h2 class="section-title">旅程同步</h2>
+            </div>
+
+            <div class="grid">
+              <div class="field field-wide">
+                <label for="trip-name">新旅程名稱</label>
+                <input id="trip-name" type="text" placeholder="例如 加拿大旅遊 2026">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="button" id="create-trip">建立新旅程</button>
+            </div>
+
+            <div class="grid" style="margin-top: 18px;">
+              <div class="field field-wide">
+                <label for="trip-code-input">載入既有旅程代碼</label>
+                <input id="trip-code-input" type="text" placeholder="例如 A8K2M4Q7R9">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="secondary" type="button" id="load-trip">載入旅程</button>
+            </div>
+
+            <div class="status" id="trip-status"></div>
+
+            <div id="active-trip-card" style="margin-top: 16px;">
+              <div class="empty-state">先建立一個旅程，或輸入旅程代碼載入既有旅程。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-inner">
+            <h2 class="section-title">新增帳單</h2>
+            <form id="bill-form" novalidate>
+              <div class="grid">
+                <div class="field field-wide">
+                  <label for="bill-name">帳單名稱</label>
+                  <input id="bill-name" name="bill-name" type="text" placeholder="例如 Day 1 晚餐、超市、伴手禮">
+                </div>
+
+                <div class="field">
+                  <label for="taiquan">泰權 商品金額（CAD）</label>
+                  <input id="taiquan" name="taiquan" type="text" inputmode="decimal" placeholder="例如 120.5+39.9+15" required>
+                </div>
+
+                <div class="field">
+                  <label for="siru">思儒 商品金額（CAD）</label>
+                  <input id="siru" name="siru" type="text" inputmode="decimal" placeholder="例如 80+12.4" required>
+                </div>
+
+                <div class="field">
+                  <label for="mingjun">茗鈞 商品金額（CAD）</label>
+                  <input id="mingjun" name="mingjun" type="text" inputmode="decimal" placeholder="例如 45.3+89" required>
+                </div>
+
+                <div class="field">
+                  <label for="yuezhe">岳哲 商品金額（CAD）</label>
+                  <input id="yuezhe" name="yuezhe" type="text" inputmode="decimal" placeholder="例如 220+16" required>
+                </div>
+
+                <div class="field">
+                  <label for="tax">總稅額（CAD）</label>
+                  <input id="tax" name="tax" type="text" inputmode="decimal" placeholder="例如 37.99" required>
+                </div>
+
+                <div class="field">
+                  <label for="charged-twd">原始刷卡金額（TWD）</label>
+                  <input id="charged-twd" name="charged-twd" type="text" inputmode="decimal" placeholder="例如 10325" required>
+                </div>
+
+                <div class="field field-wide">
+                  <label for="payer">這筆台幣是誰支付的</label>
+                  <select id="payer" name="payer">
+                    <option value="泰權">泰權</option>
+                    <option value="思儒">思儒</option>
+                    <option value="茗鈞">茗鈞</option>
+                    <option value="岳哲">岳哲</option>
+                  </select>
+                </div>
+
+                <div class="field field-wide">
+                  <span class="hint">商品欄位可以直接輸入像 `100+25+39.9`。先按「開始計算」確認數字，沒問題後再按「存到目前旅程」。</span>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="primary" type="submit">開始計算</button>
+                <button class="secondary" type="button" id="save-bill" disabled>存到目前旅程</button>
+                <button class="secondary" type="button" id="fill-demo">填入範例</button>
+                <button class="secondary" type="reset">清空</button>
+              </div>
+            </form>
+
+            <div class="status" id="bill-status"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-inner">
+            <h2 class="section-title">目前帳單結果</h2>
+
+            <div class="summary">
+              <div class="summary-card">
+                <span>商品總金額（CAD）</span>
+                <strong id="subtotal-cad">0.00</strong>
+              </div>
+              <div class="summary-card">
+                <span>總金額（CAD）</span>
+                <strong id="total-cad">0.00</strong>
+              </div>
+              <div class="summary-card">
+                <span>含手續費刷卡金額（TWD）</span>
+                <strong id="total-twd-with-fee">0</strong>
+              </div>
+              <div class="summary-card">
+                <span>匯率（TWD / CAD）</span>
+                <strong id="exchange-rate">0.000000</strong>
+              </div>
+            </div>
+
+            <div class="result-list" id="result-list">
+              <div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示這筆帳單每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>
+            </div>
+
+            <h3 class="subsection-title">這筆帳單的還款</h3>
+            <div class="settlement-list" id="settlement-list">
+              <div class="empty-state">選好付款人後，這裡會顯示這筆帳單每個人最後還要還給誰多少台幣。</div>
+            </div>
+
+            <div class="footnote" id="message"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-inner">
+            <h2 class="section-title">這趟旅程已記錄帳單</h2>
+
+            <div class="summary">
+              <div class="summary-card">
+                <span>帳單筆數</span>
+                <strong id="trip-bill-count">0</strong>
+              </div>
+              <div class="summary-card">
+                <span>總刷卡（TWD）</span>
+                <strong id="trip-total-twd">0</strong>
+              </div>
+            </div>
+
+            <div class="saved-bill-list" id="saved-bill-list">
+              <div class="empty-state">載入旅程後，這裡會出現已存在雲端的帳單清單。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-inner">
+            <h2 class="section-title">旅程總結算</h2>
+
+            <div class="summary">
+              <div class="summary-card">
+                <span>旅程總商品（CAD）</span>
+                <strong id="trip-total-cad">0.00</strong>
+              </div>
+              <div class="summary-card">
+                <span>旅程總稅額（CAD）</span>
+                <strong id="trip-total-tax">0.00</strong>
+              </div>
+              <div class="summary-card">
+                <span>旅程總金額（CAD）</span>
+                <strong id="trip-grand-total-cad">0.00</strong>
+              </div>
+              <div class="summary-card">
+                <span>旅程含手續費總額（TWD）</span>
+                <strong id="trip-grand-total-twd">0</strong>
+              </div>
+            </div>
+
+            <div class="settlement-list" id="trip-settlement-list">
+              <div class="empty-state">載入或建立旅程後，這裡會顯示整趟旅程最後要怎麼互相結清。</div>
+            </div>
+
+            <div class="footnote" id="trip-message"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const PEOPLE = [
+      { key: "taiquan", name: "泰權" },
+      { key: "siru", name: "思儒" },
+      { key: "mingjun", name: "茗鈞" },
+      { key: "yuezhe", name: "岳哲" }
+    ];
+
+    const FEE_MULTIPLIER = 1.015;
+
+    const form = document.getElementById("bill-form");
+    const tripNameInput = document.getElementById("trip-name");
+    const tripCodeInput = document.getElementById("trip-code-input");
+    const createTripButton = document.getElementById("create-trip");
+    const loadTripButton = document.getElementById("load-trip");
+    const saveBillButton = document.getElementById("save-bill");
+    const fillDemoButton = document.getElementById("fill-demo");
+
+    const activeTripCard = document.getElementById("active-trip-card");
+    const tripStatus = document.getElementById("trip-status");
+    const billStatus = document.getElementById("bill-status");
+    const resultList = document.getElementById("result-list");
+    const settlementList = document.getElementById("settlement-list");
+    const savedBillList = document.getElementById("saved-bill-list");
+    const tripSettlementList = document.getElementById("trip-settlement-list");
+    const message = document.getElementById("message");
+    const tripMessage = document.getElementById("trip-message");
+
+    const summaryEls = {
+      subtotalCad: document.getElementById("subtotal-cad"),
+      totalCad: document.getElementById("total-cad"),
+      totalTwdWithFee: document.getElementById("total-twd-with-fee"),
+      exchangeRate: document.getElementById("exchange-rate")
+    };
+
+    const tripSummaryEls = {
+      billCount: document.getElementById("trip-bill-count"),
+      totalTwd: document.getElementById("trip-total-twd"),
+      totalCad: document.getElementById("trip-total-cad"),
+      totalTax: document.getElementById("trip-total-tax"),
+      grandTotalCad: document.getElementById("trip-grand-total-cad"),
+      grandTotalTwd: document.getElementById("trip-grand-total-twd")
+    };
+
+    let activeTrip = null;
+    let currentResult = null;
+
+    function roundTo(value, decimals) {
+      const factor = 10 ** decimals;
+      return Math.round((value + Number.EPSILON) * factor) / factor;
+    }
+
+    function floorTo(value, decimals) {
+      const factor = 10 ** decimals;
+      return Math.floor((value + Number.EPSILON) * factor) / factor;
+    }
+
+    function formatNumber(value, decimals) {
+      return new Intl.NumberFormat("zh-TW", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(value);
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(value));
+    }
+
+    function parseMoneyExpression(raw, label) {
+      const normalized = raw.replaceAll(",", "").replace(/\s+/g, "");
+      if (!normalized) {
+        throw new Error(`請輸入 ${label}。`);
+      }
+
+      const parts = normalized.split("+");
+      if (parts.some((part) => part === "")) {
+        throw new Error(`${label} 的格式不正確，請使用像 100+25+39.9 的寫法。`);
+      }
+
+      let total = 0;
+      for (const part of parts) {
+        if (!/^\d+(\.\d+)?$/.test(part)) {
+          throw new Error(`${label} 只能輸入數字和加號。`);
+        }
+
+        const value = Number(part);
+        if (!Number.isFinite(value) || value < 0) {
+          throw new Error(`${label} 不能小於 0。`);
+        }
+        total += value;
+      }
+
+      return total;
+    }
+
+    function splitProportionally(total, weights, decimals) {
+      const roundedTotal = roundTo(total, decimals);
+      const step = 1 / (10 ** decimals);
+      const count = weights.length;
+
+      if (!count) {
+        return [];
+      }
+
+      if (roundedTotal === 0) {
+        return Array(count).fill(0);
+      }
+
+      const weightSum = weights.reduce((sum, value) => sum + value, 0);
+      const rawShares = weightSum === 0
+        ? Array(count).fill(roundedTotal / count)
+        : weights.map((weight) => roundedTotal * weight / weightSum);
+
+      const baseShares = rawShares.map((share) => floorTo(share, decimals));
+      const used = baseShares.reduce((sum, value) => sum + value, 0);
+      const remainderSteps = Math.round((roundedTotal - used) / step);
+
+      const order = rawShares
+        .map((share, index) => ({
+          index,
+          fraction: share - baseShares[index],
+          weight: weights[index]
+        }))
+        .sort((a, b) => {
+          if (b.fraction !== a.fraction) return b.fraction - a.fraction;
+          if (b.weight !== a.weight) return b.weight - a.weight;
+          return a.index - b.index;
+        });
+
+      for (let i = 0; i < remainderSteps; i += 1) {
+        baseShares[order[i].index] = roundTo(baseShares[order[i].index] + step, decimals);
+      }
+
+      return baseShares.map((share) => roundTo(share, decimals));
+    }
+
+    function buildSettlementsFromBalances(balances) {
+      const creditors = balances
+        .filter((item) => item.balance > 0)
+        .map((item) => ({ ...item }));
+      const debtors = balances
+        .filter((item) => item.balance < 0)
+        .map((item) => ({ name: item.name, balance: Math.abs(item.balance) }));
+
+      const settlements = [];
+      let creditorIndex = 0;
+      let debtorIndex = 0;
+
+      while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+        const creditor = creditors[creditorIndex];
+        const debtor = debtors[debtorIndex];
+        const amount = roundTo(Math.min(creditor.balance, debtor.balance), 0);
+
+        settlements.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount
+        });
+
+        creditor.balance = roundTo(creditor.balance - amount, 0);
+        debtor.balance = roundTo(debtor.balance - amount, 0);
+
+        if (creditor.balance === 0) {
+          creditorIndex += 1;
+        }
+
+        if (debtor.balance === 0) {
+          debtorIndex += 1;
+        }
+      }
+
+      return settlements;
+    }
+
+    function buildBillSettlements(people, payer, chargedTwdWithFee) {
+      const balances = people.map((person) => ({
+        name: person.name,
+        balance: person.name === payer
+          ? chargedTwdWithFee - person.twdDue
+          : -person.twdDue
+      }));
+
+      return buildSettlementsFromBalances(balances);
+    }
+
+    function getValues() {
+      const values = {};
+
+      for (const person of PEOPLE) {
+        values[person.key] = roundTo(parseMoneyExpression(form.elements[person.key].value, `${person.name} 的商品金額`), 2);
+      }
+
+      values.billName = form.elements["bill-name"].value.trim();
+      values.tax = roundTo(parseMoneyExpression(form.elements["tax"].value, "總稅額"), 2);
+      values.chargedTwd = roundTo(parseMoneyExpression(form.elements["charged-twd"].value, "原始刷卡金額"), 0);
+      values.payer = form.elements["payer"].value;
+      return values;
+    }
+
+    function calculateBill(values) {
+      const itemAmounts = PEOPLE.map((person) => values[person.key]);
+      const subtotalCad = roundTo(itemAmounts.reduce((sum, value) => sum + value, 0), 2);
+      const totalCad = roundTo(subtotalCad + values.tax, 2);
+
+      if (totalCad === 0) {
+        throw new Error("總金額（CAD）為 0，無法回推出匯率。");
+      }
+
+      const chargedTwdWithFee = roundTo(values.chargedTwd * FEE_MULTIPLIER, 0);
+      const exchangeRate = chargedTwdWithFee / totalCad;
+      const taxShares = splitProportionally(values.tax, itemAmounts, 2);
+      const totalSharesCad = itemAmounts.map((item, index) => roundTo(item + taxShares[index], 2));
+      const totalSharesTwd = splitProportionally(chargedTwdWithFee, totalSharesCad, 0);
+
+      const people = PEOPLE.map((person, index) => ({
+        name: person.name,
+        itemCad: itemAmounts[index],
+        taxCad: taxShares[index],
+        totalCad: totalSharesCad[index],
+        twdDue: totalSharesTwd[index]
+      }));
+
+      return {
+        billName: values.billName || `帳單 ${new Date().toLocaleString("zh-TW")}`,
+        subtotalCad,
+        totalTaxCad: values.tax,
+        totalCad,
+        originalChargedTwd: values.chargedTwd,
+        chargedTwdWithFee,
+        exchangeRate: roundTo(exchangeRate, 6),
+        payer: values.payer,
+        people,
+        settlements: buildBillSettlements(people, values.payer, chargedTwdWithFee)
+      };
+    }
+
+    function renderSettlementCards(container, settlements, emptyText) {
+      if (!settlements.length) {
+        container.innerHTML = `
+          <div class="settlement-card">
+            <div class="settlement-header">
+              <h3>已經結清</h3>
+              <strong>0 TWD</strong>
+            </div>
+            <div class="settlement-note">${emptyText}</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = settlements.map((item) => `
+        <article class="settlement-card">
+          <div class="settlement-header">
+            <h3>${item.from} → ${item.to}</h3>
+            <strong>${formatNumber(item.amount, 0)} TWD</strong>
+          </div>
+          <div class="settlement-note">${item.from} 還需要給 ${item.to} ${formatNumber(item.amount, 0)} TWD。</div>
+        </article>
+      `).join("");
+    }
+
+    function renderBillResults(data) {
+      summaryEls.subtotalCad.textContent = formatNumber(data.subtotalCad, 2);
+      summaryEls.totalCad.textContent = formatNumber(data.totalCad, 2);
+      summaryEls.totalTwdWithFee.textContent = formatNumber(data.chargedTwdWithFee, 0);
+      summaryEls.exchangeRate.textContent = formatNumber(data.exchangeRate, 6);
+
+      resultList.innerHTML = data.people.map((person) => `
+        <article class="person-card">
+          <div class="person-header">
+            <h3>${person.name}</h3>
+            <strong>${formatNumber(person.twdDue, 0)} TWD</strong>
+          </div>
+          <div class="person-meta">
+            <div>商品：${formatNumber(person.itemCad, 2)} CAD</div>
+            <div>稅額：${formatNumber(person.taxCad, 2)} CAD</div>
+            <div>合計：${formatNumber(person.totalCad, 2)} CAD</div>
+          </div>
+        </article>
+      `).join("");
+
+      renderSettlementCards(settlementList, data.settlements, "這筆帳單沒有需要互相轉帳的金額。");
+      message.textContent = `「${data.billName}」由 ${data.payer} 先支付。確認沒問題後，就可以把它存到目前旅程。`;
+    }
+
+    function resetCurrentResult() {
+      currentResult = null;
+      saveBillButton.disabled = true;
+      summaryEls.subtotalCad.textContent = "0.00";
+      summaryEls.totalCad.textContent = "0.00";
+      summaryEls.totalTwdWithFee.textContent = "0";
+      summaryEls.exchangeRate.textContent = "0.000000";
+      resultList.innerHTML = '<div class="empty-state">輸入資料後按下「開始計算」，這裡會顯示這筆帳單每個人的商品金額、分到的稅額、CAD 合計，以及最後應付的 TWD。</div>';
+      settlementList.innerHTML = '<div class="empty-state">選好付款人後，這裡會顯示這筆帳單每個人最後還要還給誰多少台幣。</div>';
+      message.textContent = "";
+    }
+
+    function renderActiveTrip() {
+      if (!activeTrip) {
+        activeTripCard.innerHTML = '<div class="empty-state">先建立一個旅程，或輸入旅程代碼載入既有旅程。</div>';
+        return;
+      }
+
+      activeTripCard.innerHTML = `
+        <div class="trip-card">
+          <div class="trip-card-header">
+            <h3>${activeTrip.name}</h3>
+            <strong>代碼：${activeTrip.code}</strong>
+          </div>
+          <div class="trip-card-note">
+            建立時間：${formatDate(activeTrip.createdAt)}<br>
+            最後更新：${formatDate(activeTrip.updatedAt)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSavedBills() {
+      if (!activeTrip) {
+        savedBillList.innerHTML = '<div class="empty-state">載入旅程後，這裡會出現已存在雲端的帳單清單。</div>';
+        tripSummaryEls.billCount.textContent = "0";
+        tripSummaryEls.totalTwd.textContent = "0";
+        return;
+      }
+
+      const bills = activeTrip.bills || [];
+      tripSummaryEls.billCount.textContent = formatNumber(bills.length, 0);
+      tripSummaryEls.totalTwd.textContent = formatNumber(
+        bills.reduce((sum, bill) => sum + bill.chargedTwdWithFee, 0),
+        0
+      );
+
+      if (!bills.length) {
+        savedBillList.innerHTML = '<div class="empty-state">這趟旅程還沒有任何帳單，先新增第一筆吧。</div>';
+        return;
+      }
+
+      savedBillList.innerHTML = bills.map((bill) => `
+        <article class="saved-bill-card">
+          <div class="saved-bill-header">
+            <h3>${bill.billName}</h3>
+            <strong>${formatNumber(bill.chargedTwdWithFee, 0)} TWD</strong>
+          </div>
+          <div class="saved-bill-note">
+            時間：${formatDate(bill.createdAt)}<br>
+            付款人：${bill.payer}<br>
+            商品總額：${formatNumber(bill.subtotalCad, 2)} CAD，稅額：${formatNumber(bill.totalTaxCad, 2)} CAD
+          </div>
+          <div class="saved-bill-actions">
+            <button class="secondary mini-button" type="button" data-view-id="${bill.id}">查看</button>
+            <button class="danger mini-button" type="button" data-delete-id="${bill.id}">刪除</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderTripSummary() {
+      if (!activeTrip) {
+        tripSummaryEls.totalCad.textContent = "0.00";
+        tripSummaryEls.totalTax.textContent = "0.00";
+        tripSummaryEls.grandTotalCad.textContent = "0.00";
+        tripSummaryEls.grandTotalTwd.textContent = "0";
+        tripSettlementList.innerHTML = '<div class="empty-state">載入或建立旅程後，這裡會顯示整趟旅程最後要怎麼互相結清。</div>';
+        tripMessage.textContent = "";
+        return;
+      }
+
+      const bills = activeTrip.bills || [];
+      const tripSubtotalCad = roundTo(bills.reduce((sum, bill) => sum + bill.subtotalCad, 0), 2);
+      const tripTotalTaxCad = roundTo(bills.reduce((sum, bill) => sum + bill.totalTaxCad, 0), 2);
+      const tripGrandTotalCad = roundTo(bills.reduce((sum, bill) => sum + bill.totalCad, 0), 2);
+      const tripGrandTotalTwd = roundTo(bills.reduce((sum, bill) => sum + bill.chargedTwdWithFee, 0), 0);
+
+      tripSummaryEls.totalCad.textContent = formatNumber(tripSubtotalCad, 2);
+      tripSummaryEls.totalTax.textContent = formatNumber(tripTotalTaxCad, 2);
+      tripSummaryEls.grandTotalCad.textContent = formatNumber(tripGrandTotalCad, 2);
+      tripSummaryEls.grandTotalTwd.textContent = formatNumber(tripGrandTotalTwd, 0);
+
+      if (!bills.length) {
+        tripSettlementList.innerHTML = '<div class="empty-state">這趟旅程還沒有帳單，所以目前沒有總結算結果。</div>';
+        tripMessage.textContent = "先新增第一筆帳單，之後這裡就會自動加總。";
+        return;
+      }
+
+      const balances = PEOPLE.map((person) => ({ name: person.name, balance: 0 }));
+
+      for (const bill of bills) {
+        const payerBalance = balances.find((item) => item.name === bill.payer);
+        payerBalance.balance = roundTo(payerBalance.balance + bill.chargedTwdWithFee, 0);
+
+        for (const person of bill.people) {
+          const personBalance = balances.find((item) => item.name === person.name);
+          personBalance.balance = roundTo(personBalance.balance - person.twdDue, 0);
+        }
+      }
+
+      const settlements = buildSettlementsFromBalances(balances);
+      renderSettlementCards(tripSettlementList, settlements, "目前所有帳單加總後，大家已經結清。");
+      tripMessage.textContent = `目前這趟旅程共有 ${bills.length} 筆帳單。最後照上面的金額互相轉帳，就能一次結清。`;
+    }
+
+    function setTripStatus(text) {
+      tripStatus.textContent = text;
+    }
+
+    function setBillStatus(text) {
+      billStatus.textContent = text;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const response = await fetch(path, {
+        headers: {
+          "content-type": "application/json",
+          ...(options.headers || {})
+        },
+        ...options
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "發生錯誤。");
+      }
+      return data;
+    }
+
+    async function createTrip() {
+      const name = tripNameInput.value.trim();
+      setTripStatus("正在建立旅程...");
+
+      try {
+        const data = await apiFetch("/api/trips", {
+          method: "POST",
+          body: JSON.stringify({ name })
+        });
+        activeTrip = data.trip;
+        tripCodeInput.value = activeTrip.code;
+        renderActiveTrip();
+        renderSavedBills();
+        renderTripSummary();
+        saveBillButton.disabled = !currentResult;
+        setTripStatus(`旅程已建立，代碼是 ${activeTrip.code}`);
+      } catch (error) {
+        setTripStatus(error.message);
+      }
+    }
+
+    async function loadTrip(codeOverride) {
+      const code = (codeOverride || tripCodeInput.value).trim().toUpperCase();
+      if (!code) {
+        setTripStatus("請先輸入旅程代碼。");
+        return;
+      }
+
+      setTripStatus("正在載入旅程...");
+
+      try {
+        const data = await apiFetch(`/api/trips/${encodeURIComponent(code)}`);
+        activeTrip = data.trip;
+        tripCodeInput.value = activeTrip.code;
+        renderActiveTrip();
+        renderSavedBills();
+        renderTripSummary();
+        saveBillButton.disabled = !currentResult;
+        setTripStatus(`已載入旅程 ${activeTrip.name}`);
+      } catch (error) {
+        setTripStatus(error.message);
+      }
+    }
+
+    async function saveCurrentBill() {
+      if (!activeTrip) {
+        setBillStatus("請先建立或載入旅程。");
+        return;
+      }
+
+      if (!currentResult) {
+        setBillStatus("請先計算帳單。");
+        return;
+      }
+
+      saveBillButton.disabled = true;
+      setBillStatus("正在把帳單存到雲端...");
+
+      try {
+        await apiFetch(`/api/trips/${encodeURIComponent(activeTrip.code)}/bills`, {
+          method: "POST",
+          body: JSON.stringify(currentResult)
+        });
+        await loadTrip(activeTrip.code);
+        setBillStatus(`已存入旅程「${activeTrip.name}」`);
+      } catch (error) {
+        setBillStatus(error.message);
+        saveBillButton.disabled = false;
+      }
+    }
+
+    async function deleteBill(billId) {
+      if (!activeTrip) {
+        return;
+      }
+
+      if (!window.confirm("確定要刪除這筆帳單嗎？")) {
+        return;
+      }
+
+      setBillStatus("正在刪除帳單...");
+      try {
+        await apiFetch(`/api/trips/${encodeURIComponent(activeTrip.code)}/bills/${billId}`, {
+          method: "DELETE"
+        });
+        await loadTrip(activeTrip.code);
+        setBillStatus("帳單已刪除。");
+      } catch (error) {
+        setBillStatus(error.message);
+      }
+    }
+
+    function viewBill(billId) {
+      if (!activeTrip) {
+        return;
+      }
+
+      const bill = activeTrip.bills.find((item) => String(item.id) === String(billId));
+      if (!bill) {
+        return;
+      }
+
+      renderBillResults(bill);
+      saveBillButton.disabled = true;
+      currentResult = null;
+      setBillStatus(`目前查看的是「${bill.billName}」`);
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      try {
+        currentResult = calculateBill(getValues());
+        renderBillResults(currentResult);
+        saveBillButton.disabled = !activeTrip;
+        setBillStatus(activeTrip ? "這筆帳單已算好，可以直接存到目前旅程。" : "這筆帳單已算好。先建立或載入旅程後，才能存到雲端。");
+      } catch (error) {
+        resetCurrentResult();
+        setBillStatus(error.message);
+      }
+    });
+
+    form.addEventListener("reset", () => {
+      window.setTimeout(() => {
+        form.elements["payer"].value = "泰權";
+        form.elements["bill-name"].value = "";
+        resetCurrentResult();
+        setBillStatus("");
+      }, 0);
+    });
+
+    createTripButton.addEventListener("click", () => {
+      createTrip();
+    });
+
+    loadTripButton.addEventListener("click", () => {
+      loadTrip();
+    });
+
+    saveBillButton.addEventListener("click", () => {
+      saveCurrentBill();
+    });
+
+    fillDemoButton.addEventListener("click", () => {
+      form.elements["bill-name"].value = "Day 1 晚餐";
+      form.elements["taiquan"].value = "100+20";
+      form.elements["siru"].value = "200";
+      form.elements["mingjun"].value = "300+15";
+      form.elements["yuezhe"].value = "400";
+      form.elements["tax"].value = "130";
+      form.elements["charged-twd"].value = "24830";
+      form.elements["payer"].value = "泰權";
+      setBillStatus("");
+    });
+
+    savedBillList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      const viewId = target.dataset.viewId;
+      const deleteId = target.dataset.deleteId;
+
+      if (viewId) {
+        viewBill(viewId);
+      }
+
+      if (deleteId) {
+        deleteBill(deleteId);
+      }
+    });
+
+    renderActiveTrip();
+    renderSavedBills();
+    renderTripSummary();
+    resetCurrentResult();
+  </script>
+</body>
+</html>
